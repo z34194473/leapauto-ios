@@ -44,7 +44,7 @@ final class LeapModel: ObservableObject {
     @Published var autoRefresh = false
 
     /// 极验人机验证协调器
-    let geetest = GeetestCoordinator()
+    @Published var geetest = GeetestCoordinator()
 
     private var refreshTask: Task<Void, Never>?
     private var bannerTask: Task<Void, Never>?
