@@ -5,15 +5,47 @@
 
 ---
 
-## 前情：为什么不能在本仓库的 Actions 里直接出 IPA
+## 已产出：可直接安装的 IPA
 
-本仓库的 GitHub Actions 已经验证可用（Linux runner 上 195 项测试全通过），
-但 **macOS runner 不可用**——job 会一直 `queued` 或被立即 `cancelled`。
+**本仓库的 GitHub Actions 已经构建成功，产物在 Actions 页面可下载。**
 
-原因：GitHub 免费账号的 macOS runner 需要可用额度（公开仓库也是）。
-这不是代码问题，`ubuntu-22.04` 上的同源代码编译验证全绿即为证明。
+下载地址：<https://github.com/z34194473/leapauto-ios/actions/workflows/build-ipa.yml>
+→ 点最近一次成功记录 → 页面底部 Artifacts → `LeapAuto-ipa`
 
-所以出 IPA 需要一台能提供 macOS 的环境，见下面三条路。
+已验证的产物信息：
+
+| 项 | 值 |
+|---|---|
+| 文件名 | `LeapAuto-unsigned.ipa` |
+| 大小 | 547 KB |
+| 架构 | arm64（Magic `cffaedfe`，cputype `16777228`，filetype `2` = MH_EXECUTE）|
+| Bundle ID | `com.leapauto.ios` |
+| 最低系统 | iOS 16.0 |
+| 蓝牙权限 | 已配置（中文描述）|
+| 签名 | **未签名**（需自行签名后安装）|
+
+### 关键：必须用 `macos-latest`
+
+实测结论（2026-11）：
+
+```
+runs-on: macos-13   → 永远 queued，分配不到 runner
+runs-on: macos-14   → 立即 cancelled，runner_name 为空
+runs-on: macos-latest → 正常分配，构建成功 ✅
+```
+
+所以工作流里固定用 `macos-latest`。如果你 fork 后构建失败，先检查这一行。
+
+### 重新构建
+
+```bash
+# 触发（改任意 LeapAuto/ 下文件 push 也会自动触发）
+gh workflow run build-ipa.yml --repo z34194473/leapauto-ios
+gh run watch --repo z34194473/leapauto-ios
+
+# 下载
+gh run download --repo z34194473/leapauto-ios -n LeapAuto-ipa
+```
 
 ---
 
