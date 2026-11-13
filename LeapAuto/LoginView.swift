@@ -33,7 +33,10 @@ struct LoginView: View {
             }
         }
         .overlay(alignment: .bottom) { BannerHost() }
-        .sheet(isPresented: $model.geetest.isPresented) {
+        .sheet(isPresented: Binding(
+            get: { model.geetest.isPresented },
+            set: { model.geetest.isPresented = $0 }
+        )) {
             GeetestSheet(coordinator: model.geetest)
         }
     }
