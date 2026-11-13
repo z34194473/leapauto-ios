@@ -2,9 +2,13 @@ name: LinuxSwiftProbe
 on: workflow_dispatch
 jobs:
   probe:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+      - name: Check
+        run: |
+          ls -la LeapAuto/ | head -20
+          ls -la Verify/Tests/algorithms/
       - uses: swift-actions/setup-swift@v2
         with:
           swift-version: "5.10"
