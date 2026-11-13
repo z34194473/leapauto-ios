@@ -10,8 +10,7 @@ struct LeapAutoApp: App {
     @StateObject private var model = LeapModel()
 
     init() {
-        // 深色状态栏内容 + 全局外观
-        UINavigationBarAppearance().configureWithOpaqueBackground()
+        // 导航栏 / 标签栏统一深色外观
         let nav = UINavigationBarAppearance()
         nav.configureWithOpaqueBackground()
         nav.backgroundColor = UIColor(Theme.bg)
