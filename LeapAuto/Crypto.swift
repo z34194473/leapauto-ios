@@ -137,6 +137,7 @@ enum LeapSign {
         var out = Data(count: plain.count + Int(kCCBlockSizeAES128))
         var moved = 0
         var status: CCCryptorStatus = -1
+        let outCapacity = out.count
         plain.withUnsafeBytes { (inPtr: UnsafeRawBufferPointer) in
             key.withUnsafeBytes { (keyPtr: UnsafeRawBufferPointer) in
                 iv.withUnsafeBytes { (ivPtr: UnsafeRawBufferPointer) in
@@ -147,7 +148,7 @@ enum LeapSign {
                                          keyPtr.baseAddress, key.count,
                                          ivPtr.baseAddress,
                                          inPtr.baseAddress, plain.count,
-                                         outPtr.baseAddress, out.count,
+                                         outPtr.baseAddress, outCapacity,
                                          &moved)
                     }
                 }
@@ -165,6 +166,7 @@ enum LeapSign {
         var out = Data(count: cipher.count + Int(kCCBlockSizeAES128))
         var moved = 0
         var status: CCCryptorStatus = -1
+        let outCapacity = out.count
         cipher.withUnsafeBytes { (inPtr: UnsafeRawBufferPointer) in
             key.withUnsafeBytes { (keyPtr: UnsafeRawBufferPointer) in
                 iv.withUnsafeBytes { (ivPtr: UnsafeRawBufferPointer) in
@@ -175,7 +177,7 @@ enum LeapSign {
                                          keyPtr.baseAddress, key.count,
                                          ivPtr.baseAddress,
                                          inPtr.baseAddress, cipher.count,
-                                         outPtr.baseAddress, out.count,
+                                         outPtr.baseAddress, outCapacity,
                                          &moved)
                     }
                 }
