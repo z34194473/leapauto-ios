@@ -26,7 +26,7 @@ extension ButtonStyle {
 public struct ButtonStyleConfiguration {
     public struct Label: View {
         public var body: Never { fatalError() }
-        public init() {}
+        nonisolated public init() {}
     }
     public let label: Label
     public let isPressed: Bool
@@ -329,7 +329,7 @@ public struct VerticalAlignment: Hashable, Sendable {
     public static let bottom = VerticalAlignment()
     public static let firstTextBaseline = VerticalAlignment()
     public static let lastTextBaseline = VerticalAlignment()
-    public init() {}
+    nonisolated public init() {}
 }
 public struct Alignment { public static let center = Alignment(); public static let leading = Alignment(); public static let top = Alignment() }
 
