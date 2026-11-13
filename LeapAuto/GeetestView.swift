@@ -1,4 +1,4 @@
-//
+﻿//
 //  GeetestView.swift
 //  极验 v4 人机验证（WKWebView 方案）
 //
@@ -328,7 +328,7 @@ struct GeetestSheet: View {
                     } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(Theme.textSecondary)
+                            .foregroundColor(Theme.textDim)
                             .padding(8)
                             .background(Theme.card)
                             .clipShape(Circle())
@@ -346,7 +346,7 @@ struct GeetestSheet: View {
                                 .tint(Theme.brand)
                             Text("正在加载验证组件…")
                                 .font(.system(size: 13))
-                                .foregroundColor(Theme.textSecondary)
+                                .foregroundColor(Theme.textDim)
                         }
                     }
 
