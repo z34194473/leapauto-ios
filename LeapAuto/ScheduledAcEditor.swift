@@ -1,4 +1,4 @@
-//
+﻿//
 //  ScheduledAcEditor.swift
 //  定时空调编辑面板
 //
@@ -43,7 +43,7 @@ struct ScheduledAcEditor: View {
                 }
             }
         }
-        .presentationBackground(Theme.bg)
+        .sheetBackgroundCompat(Theme.bg)
         .onAppear { load() }
     }
 
