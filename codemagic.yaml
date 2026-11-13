@@ -1,0 +1,108 @@
+workflows:
+  ios-unsigned:
+    name: LeapAuto iOS (unsigned IPA)
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      xcode: latest
+      vars:
+        SCHEME: "LeapAuto"
+        PROJECT: "LeapAuto.xcodeproj"
+    scripts:
+      - name: Show toolchain
+        script: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+
+      - name: Run algorithm verification (81 tests)
+        script: |
+          set -e
+          swiftc -O \
+            LeapAuto/SM.swift LeapAuto/Crypto.swift LeapAuto/Compat.swift \
+            LeapAuto/BLE.swift LeapAuto/Models.swift \
+            Verify/Tests/algorithms/main.swift \
+            -o /tmp/algorithms
+          /tmp/algorithms
+
+      - name: Run UI logic verification (114 tests)
+        script: |
+          set -e
+          swiftc -O \
+            LeapAuto/SM.swift LeapAuto/Crypto.swift LeapAuto/Compat.swift \
+            LeapAuto/BLE.swift LeapAuto/Models.swift LeapAuto/LeapAPI.swift \
+            Verify/Tests/uilogic/main.swift \
+            -o /tmp/uilogic
+          /tmp/uilogic
+
+      - name: Build archive (no signing)
+        script: |
+          set -e
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            -archivePath build/LeapAuto.xcarchive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            DEVELOPMENT_TEAM="" \
+            ENABLE_BITCODE=NO \
+            archive
+
+      - name: Package unsigned IPA
+        script: |
+          set -e
+          APP="build/LeapAuto.xcarchive/Products/Applications/LeapAuto.app"
+          test -d "$APP"
+          mkdir -p build/Payload
+          cp -R "$APP" build/Payload/
+          cd build
+          zip -qry LeapAuto-unsigned.ipa Payload
+          ls -lh LeapAuto-unsigned.ipa
+
+    artifacts:
+      - build/LeapAuto-unsigned.ipa
+      - build/LeapAuto.xcarchive/Products/Applications/LeapAuto.app
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+
+  ios-signed:
+    name: LeapAuto iOS (signed IPA, 需 Apple Developer)
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: codemagic
+    environment:
+      xcode: latest
+      ios_signing:
+        distribution_type: ad_hoc
+        bundle_identifier: com.leapauto.ios
+      vars:
+        SCHEME: "LeapAuto"
+        PROJECT: "LeapAuto.xcodeproj"
+    scripts:
+      - name: Set up code signing
+        script: |
+          xcode-project use-profiles
+
+      - name: Build signed IPA
+        script: |
+          set -e
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            -archivePath build/LeapAuto.xcarchive \
+            archive
+          xcodebuild -exportArchive \
+            -archivePath build/LeapAuto.xcarchive \
+            -exportPath build/ipa \
+            -exportOptionsPlist exportOptions.plist
+
+    artifacts:
+      - build/ipa/*.ipa
