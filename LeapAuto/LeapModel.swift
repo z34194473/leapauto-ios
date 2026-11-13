@@ -43,6 +43,9 @@ final class LeapModel: ObservableObject {
     @Published var lastRefresh: Date?
     @Published var autoRefresh = false
 
+    /// 极验人机验证协调器
+    let geetest = GeetestCoordinator()
+
     private var refreshTask: Task<Void, Never>?
     private var bannerTask: Task<Void, Never>?
 
@@ -116,14 +119,38 @@ final class LeapModel: ObservableObject {
             show(.warning, "请输入验证码")
             return
         }
+        await performSmsLogin(captcha: nil)
+    }
+
+    /// 极验验证完成后重试登录
+    func loginWithSms(captcha: GeetestResult) async {
+        await performSmsLogin(captcha: captcha)
+    }
+
+    private func performSmsLogin(captcha: GeetestResult?) async {
         busyCount += 1
         defer { busyCount -= 1 }
         do {
-            try await api.loginWithSms(phone: phone, code: smsCode)
-            applySmDevice()
-            show(.success, "登录成功")
-            route = .main
-            await bootstrap()
+            let outcome = try await api.loginWithSms(phone: phone,
+                                                     code: smsCode,
+                                                     captcha: captcha)
+            switch outcome {
+            case .needCaptcha(let riskType):
+                // 弹出人机验证，完成后重试
+                geetest.begin(riskType: riskType) { [weak self] result in
+                    guard let self = self else { return }
+                    guard let result = result else {
+                        self.show(.warning, "已取消安全验证")
+                        return
+                    }
+                    Task { await self.loginWithSms(captcha: result) }
+                }
+            case .success:
+                applySmDevice()
+                show(.success, "登录成功")
+                route = .main
+                await bootstrap()
+            }
         } catch {
             show(.error, error.localizedDescription)
         }
