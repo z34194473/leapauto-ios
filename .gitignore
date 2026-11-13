@@ -1,0 +1,23 @@
+﻿# macOS / Xcode
+.DS_Store
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# 构建产物
+*.ipa
+*.app
+*.dSYM
+*.xcarchive
+Payload/
+
+# Windows / 验证产物
+*.exe
+*.lib
+*.exp
+*.obj
+*.pdb
+__pycache__/
+*.pyc

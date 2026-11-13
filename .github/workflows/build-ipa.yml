@@ -1,0 +1,76 @@
+﻿name: Build iOS IPA
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      bundle_id:
+        description: 'Bundle Identifier'
+        required: false
+        default: 'com.leapauto.ios'
+
+jobs:
+  build:
+    name: Build unsigned IPA
+    runs-on: macos-14
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+
+      - name: Build for device (no code signing)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project LeapAuto.xcodeproj \
+            -scheme LeapAuto \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            -archivePath build/LeapAuto.xcarchive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            DEVELOPMENT_TEAM="" \
+            ENABLE_BITCODE=NO \
+            archive 2>&1 | tee build.log | tail -80
+
+      - name: Package IPA
+        run: |
+          set -euo pipefail
+          APP="build/LeapAuto.xcarchive/Products/Applications/LeapAuto.app"
+          if [ ! -d "$APP" ]; then
+            echo "::error::Build product not found at $APP"
+            echo "--- last 200 lines of build.log ---"
+            tail -200 build.log || true
+            exit 1
+          fi
+          mkdir -p build/Payload
+          cp -R "$APP" build/Payload/
+          cd build
+          zip -qry LeapAuto-unsigned.ipa Payload
+          ls -lh LeapAuto-unsigned.ipa
+          echo "IPA_SIZE=$(stat -f%z LeapAuto-unsigned.ipa)" >> $GITHUB_ENV
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LeapAuto-ipa
+          path: build/LeapAuto-unsigned.ipa
+          retention-days: 30
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          retention-days: 7

@@ -1,0 +1,10 @@
+﻿* text=auto eol=lf
+*.swift text eol=lf
+*.pbxproj text eol=lf
+*.xcscheme text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
+*.py text eol=lf
+*.ps1 text eol=crlf
+*.png binary
+*.ipa binary
