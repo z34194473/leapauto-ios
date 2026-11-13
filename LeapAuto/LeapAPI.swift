@@ -211,6 +211,24 @@ final class LeapAPI: @unchecked Sendable {
         persist()
     }
 
+    /// 更换设备 ID（风控换环境用）
+    func setDeviceId(_ value: String) {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        deviceId = trimmed
+        persist()
+    }
+
+    /// 生成并应用一个全新的随机 deviceId（32 位小写 hex）
+    @discardableResult
+    func rotateDeviceId() -> String {
+        let hex = "0123456789abcdef"
+        let fresh = String((0..<32).map { _ in hex.randomElement()! })
+        deviceId = fresh
+        persist()
+        return fresh
+    }
+
     func setPhone(_ value: String) {
         phone = value.trimmingCharacters(in: .whitespaces)
         persist()
@@ -431,6 +449,9 @@ final class LeapAPI: @unchecked Sendable {
     func errorMessage(_ resp: [String: Any]) -> String {
         let raw = (resp["msg"] as? String) ?? (resp["message"] as? String) ?? ""
         if raw.contains("临时管制") { return "登录触发安全风控临时管制，请稍后重试" }
+        if raw.contains("疑似高风险") {
+            return "当前网络环境被风控拦截，请换用移动数据（4G/5G）或等待 10 分钟后重试"
+        }
         if raw.contains("验证码") && (raw.contains("过期") || raw.contains("失效")) { return "验证码已失效，请重新获取" }
         if raw.contains("验证码") { return "验证码错误，请检查后重试" }
         if raw.contains("频繁") { return "请求过于频繁，请稍后重试" }
