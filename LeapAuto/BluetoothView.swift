@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Foundation
 
 struct BluetoothView: View {
     @EnvironmentObject var model: LeapModel
@@ -216,15 +217,15 @@ struct BluetoothBody: View {
                 HStack(spacing: 10) {
                     ActionButton(title: "蓝牙解锁",
                                  icon: "lock.open.fill",
-                                 tint: Theme.orange,
                                  active: ble.confirmedAction == .unlock,
+                                 tint: Theme.orange,
                                  disabled: ble.phase != .ready) {
                         model.bleControl(.unlock)
                     }
                     ActionButton(title: "蓝牙上锁",
                                  icon: "lock.fill",
-                                 tint: Theme.green,
                                  active: ble.confirmedAction == .lock,
+                                 tint: Theme.green,
                                  disabled: ble.phase != .ready) {
                         model.bleControl(.lock)
                     }
