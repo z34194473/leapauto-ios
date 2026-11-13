@@ -1,0 +1,55 @@
+name: Verify Algorithms
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  algorithms:
+    name: 算法验证（195 项）
+    runs-on: macos-14
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Swift version
+        run: swift --version
+
+      - name: 算法层（81 项）
+        run: |
+          set -o pipefail
+          swiftc -O \
+            LeapAuto/SM.swift LeapAuto/Crypto.swift LeapAuto/Compat.swift \
+            LeapAuto/BLE.swift LeapAuto/Models.swift \
+            Verify/Tests/algorithms/main.swift \
+            -o algorithms && ./algorithms
+
+      - name: UI 逻辑层（114 项）
+        run: |
+          set -o pipefail
+          swiftc -O \
+            LeapAuto/SM.swift LeapAuto/Crypto.swift LeapAuto/Compat.swift \
+            LeapAuto/BLE.swift LeapAuto/Models.swift LeapAuto/LeapAPI.swift \
+            Verify/Tests/uilogic/main.swift \
+            -o uilogic && ./uilogic
+
+  protocol:
+    name: 真实协议验证（访问生产服务器）
+    runs-on: macos-14
+    timeout-minutes: 15
+    continue-on-error: true   # 外部服务波动不阻塞构建
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 签名 / RSA / JWT / signKey
+        run: |
+          set -o pipefail
+          swiftc -O \
+            LeapAuto/SM.swift LeapAuto/Crypto.swift LeapAuto/Compat.swift \
+            LeapAuto/BLE.swift LeapAuto/Models.swift \
+            Verify/Tests/protocol/main.swift \
+            -o protocol && ./protocol
