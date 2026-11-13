@@ -105,8 +105,8 @@ final class LeapModel: ObservableObject {
     func sendSms() async {
         let target = phone.trimmingCharacters(in: .whitespaces)
         guard !target.isEmpty else { show(.warning, "请先输入手机号"); return }
-        await perform("发送验证码") {
-            try await api.sendSms(phone: target)
+        await perform("发送验证码") { [self] in
+            try await self.api.sendSms(phone: target)
         }
         if busyCount == 0 { show(.success, "验证码已发送") }
     }
