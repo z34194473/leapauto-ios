@@ -33,6 +33,9 @@ struct LoginView: View {
             }
         }
         .overlay(alignment: .bottom) { BannerHost() }
+        .sheet(isPresented: $model.geetest.isPresented) {
+            GeetestSheet(coordinator: model.geetest)
+        }
     }
 
     // ---------------------------------------------------------- 头部
