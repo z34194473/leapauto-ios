@@ -9,8 +9,16 @@
 
 import Foundation
 
+#if canImport(CryptoKit)
+import CryptoKit
+#endif
+
 #if canImport(Security)
 import Security
+#endif
+
+#if canImport(CommonCrypto)
+import CommonCrypto
 #endif
 
 // ============================================================ 摘要算法（跨平台统一入口）
