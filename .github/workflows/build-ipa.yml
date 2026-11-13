@@ -1,4 +1,4 @@
-name: Build iOS IPA
+﻿name: Build iOS IPA
 
 # 说明：
 #   本工作流需要 macOS runner（macos-14 / macos-15）。
@@ -22,7 +22,7 @@ on:
 jobs:
   build:
     name: Build unsigned IPA
-    runs-on: macos-14
+    runs-on: macos-latest
     timeout-minutes: 40
 
     steps:
