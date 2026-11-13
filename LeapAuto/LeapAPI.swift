@@ -506,14 +506,25 @@ final class LeapAPI: @unchecked Sendable {
         return resp
     }
 
-    func loginWithSms(phone rawPhone: String, code rawCode: String) async throws -> OldAuth {
+    /// 短信登录结果：可能是成功，也可能需要人机验证
+    enum SmsLoginOutcome {
+        /// 需要极验验证，携带 risk_type（内含 captchaId）
+        case needCaptcha(riskType: String)
+        /// 登录成功
+        case success(OldAuth)
+    }
+
+    func loginWithSms(phone rawPhone: String,
+                      code rawCode: String,
+                      captcha: GeetestResult? = nil) async throws -> SmsLoginOutcome {
         let target = rawPhone.trimmingCharacters(in: .whitespaces)
         let smsCode = rawCode.trimmingCharacters(in: .whitespaces)
         guard !target.isEmpty, !smsCode.isEmpty else {
             throw LeapAPIError("手机号和验证码不能为空")
         }
         let cipher = try LeapSign.rsaEncryptPhone(target)
-        let query: [String: String] = [
+
+        var query: [String: String] = [
             "phoneNoCiphertext": cipher,
             "smsCode": smsCode,
             "deviceID": deviceId,
@@ -521,6 +532,11 @@ final class LeapAPI: @unchecked Sendable {
             "os": "android",
             "pageUrl": ""
         ]
+        // 极验凭据（服务端要求时才有）
+        if let c = captcha, c.isValid {
+            for (k, v) in c.queryItems { query[k] = v }
+        }
+
         let resp = try await requestJSON(LeapHost.user + LeapHost.smsLogin,
                                          method: "POST",
                                          headers: oldAppHeaders(withToken: false),
@@ -528,11 +544,11 @@ final class LeapAPI: @unchecked Sendable {
                                          body: .empty,
                                          stage: "check_login_with_phone")
 
-        // 极验风控挑战
+        // 服务端下发 risk_type → 需要人机验证
         if let data = resp["data"] as? [String: Any],
-           let risk = data["risk_type"] as? String, !risk.isEmpty {
-            throw LeapAPIError("触发极验风控（risk_type=\(risk)），请改用「导入凭据」登录",
-                               stage: "check_login_with_phone")
+           let risk = data["risk_type"] as? String,
+           GeetestPage.needsCaptcha(risk) {
+            return .needCaptcha(riskType: risk)
         }
 
         let auth = try parseOldAuth(resp)
@@ -541,8 +557,9 @@ final class LeapAPI: @unchecked Sendable {
         generation += 1
         persist()
         try await exchangeNewGateway()
-        return auth
+        return .success(auth)
     }
+
 
     private func parseOldAuth(_ resp: [String: Any]) throws -> OldAuth {
         let data = resp["data"] as? [String: Any]
