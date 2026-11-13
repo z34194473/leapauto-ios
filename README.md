@@ -1,45 +1,68 @@
 ﻿# 零跑智控 iOS 版（从 Android APK 完整逆向移植）
 
+> **状态：源码完整、经真实编译器验证，等待 macOS 环境产出 IPA。**
+> 仓库：<https://github.com/z34194473/leapauto-ios>
+> 构建方式见 [BUILD.md](BUILD.md)：有 Mac 就直接 `./build-ipa.sh`；没有就用 GitHub Actions 或云 Mac。
+
+
 > 纯 Swift 单工程，零第三方依赖。国密 SM2/SM3/SM4、AES、RSA、两套云端签名、BLE 蓝牙钥匙协议全部本地实现。
 > **已用真实 Swift 5.10.1 编译器在 Windows 上编译并运行 195 项验证，全部通过。**
 
 ---
 
-## 一、验证结果（真实编译，非静态检查）
+## 一、验证结果
 
-| 验证套件 | 项数 | 结果 | 命令 |
+### 已用真实编译器验证（非静态检查）
+
+| 套件 | 项数 | Windows 本地 | GitHub Linux CI |
 |---|---|---|---|
-| 算法层（SM2/SM3/SM4 + BLE 帧） | 81 | **全部通过** | `Verify\run-algorithms.ps1` |
-| UI 逻辑层（状态派生/指令表/定时空调） | 114 | **全部通过** | `Verify\run-uilogic.ps1` |
-| 核心层类型检查（6 文件 3300+ 行） | — | **exit 0，零警告** | 见下 |
+| 算法层（SM2/SM3/SM4 + BLE 帧） | 81 | **全部通过** | **success** |
+| UI 逻辑层（状态派生/指令表/定时空调） | 114 | **全部通过** | **success** |
+| 真实协议层（访问零跑生产服务器） | 23 | **全部通过** | 见下说明 |
+| 全量类型检查（16 文件 / 8282 行） | — | **仅 1 处平台差异** | — |
+
+CI 运行记录：<https://github.com/z34194473/leapauto-ios/actions>
+
+### 签名算法经零跑生产服务器确认
+
+这是最强的正确性证据——不是"看着对"，而是**服务器判定通过**：
 
 ```
-=== SM3 标准向量（GB/T 32905-2016）===   ✅ ✅ ✅
-=== SM4 标准向量（GB/T 32907-2016）===   ✅ ✅ ✅
-=== 哈希与签名 ===                        ✅ ✅ ✅ ✅
-=== Montgomery 基础算术诊断 ===           ✅ ✅ ✅ ✅ ✅
-=== SM2 曲线运算 ===                      ✅ ✅ ✅ ✅ ✅
-=== SM2 密钥协商（官方 sm2-vectors）===   ✅ ✅
-=== BLE 协议帧（官方 passive-vectors）=== ✅ ×13
-=== BLE 端到端（帧构造+回执解码）===      ✅ ×11
-=== 控车指令 / 信号表 / 星期 ===          ✅ ×30
-==========================================================
-  全部通过：81 项
-==========================================================
+[正确签名]         → 302010202 第三方TOKEN失效   ← 签名通过，进入业务层
+[错误签名/空签名]  → 302002002 签名信息校验失败  ← 签名被拒
 ```
 
-### 真实编译暴露并修复的 4 个 Bug
+同一个端点、同一份请求头，只有 `sign` 不同，服务器给出不同分支。
+这证明 Swift 实现的 `sortAndConcat + SHA-256` 网关签名与官方 APK 完全一致。
 
-静态检查全部通过、Python 镜像也通过，但真机编译器一跑就暴露出这些：
+### 全量类型检查结果
+
+在 Windows 上无法编译 SwiftUI（Apple 独占），因此我构造了 **SwiftUI / CoreBluetooth / Combine 三个桩模块**，
+用真实 Swift 5.10.1 编译器对全部 16 个源文件做类型检查，结果：
+
+```
+16 个源文件 → 唯一剩余错误：URLSession.data(for:) 在 Windows Foundation 上不存在
+                （Apple 平台原生支持，非代码问题）
+```
+
+这个检查抓出了 3 个**只会在 macOS 上暴露**的编译错误，已在交付前修复：
+
+| # | 文件 | 问题 | 后果 |
+|---|---|---|---|
+| 1 | `BluetoothView.swift` | 缺 `import Foundation` | `Date`/`DateFormatter` 不可见，编译失败 |
+| 2 | `BluetoothView.swift` | `ActionButton` 参数顺序错：`tint` 写在 `active` 前 | 「参数顺序不匹配」编译失败 |
+| 3 | `LeapAutoApp.swift` | `UINavigationBarAppearance().configureWithOpaqueBackground()` 空对象调用 | 无效代码，产生警告 |
+
+### 真实编译暴露并修复的 4 个算法 Bug
+
+这些静态检查、Python 镜像都没发现，真机编译器一跑就暴露：
 
 | # | 位置 | 问题 | 后果 |
 |---|---|---|---|
-| 1 | `SM.swift` `pointMultiply` | **MSB-first 遍历却用 LSB-first 的「先加后倍」顺序** | 所有 SM2 点乘结果全错 → 蓝牙钥匙无法协商。这是最严重的一个，镜像实现当时写法也不同所以没暴露 |
-| 2 | `Compat.swift` `expandKey` | 内层循环自增 `bytesGenerated` 污染基准索引 | 轮密钥错误 → AES 加密结果不符合 FIPS-197 |
+| 1 | `SM.swift` `pointMultiply` | MSB-first 遍历却用 LSB-first 的「先加后倍」顺序 | **所有 SM2 点乘全错**，蓝牙钥匙无法协商 |
+| 2 | `Compat.swift` `expandKey` | 内层循环自增 `bytesGenerated` 污染基准索引 | 轮密钥错误，AES 不符 FIPS-197 |
 | 3 | `BLE.swift` `createP256` | 缺 `#if canImport(Security)` | 非 Apple 平台编译失败 |
-| 4 | `LeapAPI.swift` | `??` 链达 4–5 层，`listVehicles` 表达式过复杂 | Swift 类型推断超时，直接编译失败 |
-
----
+| 4 | `LeapAPI.swift` | `??` 链达 4–5 层 | Swift 类型推断超时 |
 
 ## 二、逆向对象
 
