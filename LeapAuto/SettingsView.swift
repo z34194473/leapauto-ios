@@ -1,4 +1,4 @@
-﻿//
+//
 //  SettingsView.swift
 //  设置页：账号 / 车辆 / 诊断 / 关于
 //
@@ -318,6 +318,33 @@ struct DiagnosticsSheet: View {
                 InfoRow(title: "蓝牙", value: "\(model.ble.phase.label) · MTU \(model.ble.mtu)",
                         icon: "antenna.radiowaves.left.and.right")
                 InfoRow(title: "信号字段", value: "\(model.status.raw.count) 个", icon: "list.bullet")
+
+                Divider().padding(.vertical, 6)
+
+                Text("风控环境")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(Theme.textDim)
+                Text("登录遇到「疑似高风险」时，换网络或换设备 ID 可绕过")
+                    .font(.system(size: 11))
+                    .foregroundColor(Theme.textFaint)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Button {
+                    let fresh = model.api.rotateDeviceId()
+                    model.show(.success, "已更换 deviceId：\(fresh.prefix(8))…")
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                        Text("更换设备 ID")
+                    }
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(Theme.brand)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 9)
+                    .background(Theme.brand.opacity(0.12))
+                    .cornerRadius(9)
+                }
+                .buttonStyle(.plain)
             }
         }
     }
