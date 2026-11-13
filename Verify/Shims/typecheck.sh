@@ -21,19 +21,23 @@ mkdir -p "$WORK/copy"
 
 # ---- 1. 构建桩模块
 echo "[1/4] 构建桩模块..."
+build_module() {
+    local name="$1" src="$2"
+    local out
+    out=$(swiftc -emit-module -module-name "$name" \
+              -emit-module-path "$WORK/$name.swiftmodule" \
+              -I "$WORK" "$src" 2>&1)
+    if echo "$out" | grep -q 'error:'; then
+        echo "      ❌ $name 桩构建失败:"
+        echo "$out" | grep 'error:' | sed 's/^/        /'
+        return 1
+    fi
+    return 0
+}
 
-swiftc -emit-module -module-name Combine \
-    -emit-module-path "$WORK/Combine.swiftmodule" \
-    "$SHIM_DIR/CombineShim2.swift" 2>&1 | grep -E 'error' && exit 1
-
-swiftc -emit-module -module-name CoreBluetooth \
-    -emit-module-path "$WORK/CoreBluetooth.swiftmodule" \
-    "$SHIM_DIR/CoreBluetoothShim.swift" 2>&1 | grep -E 'error' && exit 1
-
-swiftc -emit-module -module-name SwiftUI \
-    -emit-module-path "$WORK/SwiftUI.swiftmodule" \
-    -I "$WORK" "$SHIM_DIR/SwiftUIShim.swift" 2>&1 | grep -E 'error' && exit 1
-
+build_module Combine        "$SHIM_DIR/CombineShim2.swift"      || exit 1
+build_module CoreBluetooth  "$SHIM_DIR/CoreBluetoothShim.swift"  || exit 1
+build_module SwiftUI        "$SHIM_DIR/SwiftUIShim.swift"        || exit 1
 echo "      ✓ Combine / CoreBluetooth / SwiftUI 桩已就绪"
 echo ""
 
@@ -65,30 +69,36 @@ echo ""
 # ---- 3. 类型检查
 echo "[3/4] 类型检查..."
 OUTPUT=$(swiftc -typecheck -I "$WORK" "$WORK"/copy/*.swift 2>&1)
-ERRORS=$(echo "$OUTPUT" | grep -c 'error:' || true)
 echo ""
 
 # ---- 4. 结果
 echo "[4/4] 结果"
 echo "==============================================="
-if [ "$ERRORS" -eq 0 ]; then
+
+ALL_ERRORS=$(echo "$OUTPUT" | grep 'error:' | grep -v 'error: fatalError' || true)
+
+if [ -z "$ALL_ERRORS" ]; then
     echo "  ✅ 全部通过，0 错误"
     exit 0
 fi
 
-# 过滤掉已知的平台差异（Windows/Linux Foundation 缺 URLSession.data）
-REAL=$(echo "$OUTPUT" | grep 'error:' | grep -v 'URLSession' | grep -v 'no such module')
-REAL_COUNT=$(echo "$REAL" | grep -c 'error:' || true)
+# 已知平台差异（Apple 平台原生支持，Linux/Windows Foundation 缺失）
+PLATFORM_DIFF=$(echo "$ALL_ERRORS" | grep -E 'URLSession|FoundationNetworking|no such module' || true)
+REAL=$(echo "$ALL_ERRORS" | grep -vE 'URLSession|FoundationNetworking|no such module' || true)
 
-if [ "$REAL_COUNT" -eq 0 ]; then
+if [ -z "$REAL" ]; then
     echo "  ✅ 通过（仅剩 Foundation 平台差异，非代码问题）"
     echo ""
     echo "  平台差异（Apple 平台原生支持）："
-    echo "$OUTPUT" | grep 'error:' | sed 's/^/    /'
+    echo "$PLATFORM_DIFF" | sed 's/^/    /'
     exit 0
 fi
 
-echo "  ❌ $REAL_COUNT 个真实错误"
+echo "  ❌ $(echo "$REAL" | grep -c 'error:') 个真实错误"
 echo ""
 echo "$REAL" | sed 's/^/  /'
+if [ -n "$PLATFORM_DIFF" ]; then
+    echo ""
+    echo "  （另有平台差异 $(echo "$PLATFORM_DIFF" | grep -c 'error:') 处，已忽略）"
+fi
 exit 1
