@@ -404,3 +404,19 @@ struct LevelSelector: View {
         .padding(.vertical, 4)
     }
 }
+
+// ============================================================
+//  iOS 16.0 兼容：presentationBackground 需要 iOS 16.4+
+//  iOS 16.4 以下用 background 兜底（视觉近似）
+// ============================================================
+
+extension View {
+    @ViewBuilder
+    func sheetBackgroundCompat(_ color: Color) -> some View {
+        if #available(iOS 16.4, *) {
+            self.presentationBackground(color)
+        } else {
+            self.background(color)
+        }
+    }
+}
