@@ -1,4 +1,4 @@
-//
+﻿//
 //  SettingsView.swift
 //  设置页：账号 / 车辆 / 诊断 / 关于
 //
@@ -299,7 +299,7 @@ struct DiagnosticsSheet: View {
                 }
             }
         }
-        .presentationBackground(Theme.bg)
+        .sheetBackgroundCompat(Theme.bg)
     }
 
     private var summaryCard: some View {
