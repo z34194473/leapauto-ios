@@ -10,6 +10,7 @@
 		AA0000010000000000000001 /* LeapAutoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000010000000000000001 /* LeapAutoApp.swift */; };
 		AA0000020000000000000001 /* SM.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000020000000000000001 /* SM.swift */; };
 		AA0000100000000000000001 /* Compat.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000110000000000000001 /* Compat.swift */; };
+		AA0000120000000000000001 /* GeetestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000120000000000000001 /* GeetestView.swift */; };
 		AA0000030000000000000001 /* Crypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000030000000000000001 /* Crypto.swift */; };
 		AA0000040000000000000001 /* BLE.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000040000000000000001 /* BLE.swift */; };
 		AA0000050000000000000001 /* LeapAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000050000000000000001 /* LeapAPI.swift */; };
@@ -29,6 +30,7 @@
 		BB0000010000000000000001 /* LeapAutoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeapAutoApp.swift; sourceTree = "<group>"; };
 		BB0000020000000000000001 /* SM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SM.swift; sourceTree = "<group>"; };
 		BB0000110000000000000001 /* Compat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Compat.swift; sourceTree = "<group>"; };
+		BB0000120000000000000001 /* GeetestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeetestView.swift; sourceTree = "<group>"; };
 		BB0000030000000000000001 /* Crypto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Crypto.swift; sourceTree = "<group>"; };
 		BB0000040000000000000001 /* BLE.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLE.swift; sourceTree = "<group>"; };
 		BB0000050000000000000001 /* LeapAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeapAPI.swift; sourceTree = "<group>"; };
@@ -71,6 +73,7 @@
 				BB0000090000000000000001 /* Theme.swift */,
 				BB0000020000000000000001 /* SM.swift */,
 				BB0000110000000000000001 /* Compat.swift */,
+				BB0000120000000000000001 /* GeetestView.swift */,
 				BB0000030000000000000001 /* Crypto.swift */,
 				BB0000040000000000000001 /* BLE.swift */,
 				BB0000050000000000000001 /* LeapAPI.swift */,
@@ -167,6 +170,7 @@
 				AA0000010000000000000001 /* LeapAutoApp.swift in Sources */,
 				AA0000020000000000000001 /* SM.swift in Sources */,
 				AA0000100000000000000001 /* Compat.swift in Sources */,
+				AA0000120000000000000001 /* GeetestView.swift in Sources */,
 				AA0000030000000000000001 /* Crypto.swift in Sources */,
 				AA0000040000000000000001 /* BLE.swift in Sources */,
 				AA0000050000000000000001 /* LeapAPI.swift in Sources */,
