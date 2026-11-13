@@ -1,11 +1,30 @@
-name: LinuxTypecheck
-on: workflow_dispatch
+name: SwiftUI Typecheck (Linux)
+
+# 用桩模块在 Linux 上验证 SwiftUI 代码的语法与类型正确性。
+# 这是在不具备 macOS 的情况下，最接近真实编译的检查手段。
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
 jobs:
-  check:
+  typecheck:
+    name: 桩模块类型检查
     runs-on: ubuntu-22.04
+    timeout-minutes: 20
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: swift-actions/setup-swift@v2
         with:
           swift-version: "5.10"
-      - run: swift --version
+
+      - name: Swift version
+        run: swift --version
+
+      - name: Run typecheck
+        run: |
+          chmod +x Verify/Shims/typecheck.sh
+          ./Verify/Shims/typecheck.sh
