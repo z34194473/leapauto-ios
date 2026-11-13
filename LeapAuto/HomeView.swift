@@ -1,4 +1,4 @@
-//
+﻿//
 //  HomeView.swift
 //  首页：车辆概览 / 电量续航 / 快捷控制 / 状态卡片
 //
@@ -549,7 +549,7 @@ struct VehiclePickerSheet: View {
                 }
             }
         }
-        .presentationBackground(Theme.bg)
+        .sheetBackgroundCompat(Theme.bg)
     }
 }
 
@@ -611,7 +611,7 @@ struct PhotoSheet: View {
                 }
             }
         }
-        .presentationBackground(Theme.bg)
+        .sheetBackgroundCompat(Theme.bg)
         .task {
             if model.chassisPhoto == nil { await model.loadChassisPhoto() }
             if let photo = model.chassisPhoto { await load(photo.fileUrl) }
